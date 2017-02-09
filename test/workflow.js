@@ -1,25 +1,13 @@
 const expect = require('expect');
 const Workflow = require('../lib/workflow');
 
-class TestLog {
-  constructor() {
-    this.log = [];
-  }
-
-  dump() {
-    return this.log;
-  }
-
-  info() {
-    this.log.push(Array.prototype.slice.call(arguments));
-  }
-}
-
 describe('Workflow', () => {
   let log;
 
   beforeEach(() => {
-    log = new TestLog();
+    log = {
+      info: expect.createSpy()
+    };
   });
 
   describe('matches', () => {
@@ -59,21 +47,27 @@ describe('Workflow', () => {
       ).toBeFalsy();
     });
 
-    describe('logs', () => {
+    describe('logging', () => {
       let workflow;
 
       beforeEach(() => {
         workflow = new Workflow(['issues.opened', 'issues.labeled'], log);
       });
 
-      it('for a matching event', () => {
+      it('writes to info for a matching event', () => {
         const event = {event: 'issues', payload: {action: 'labeled'}};
         workflow.matches(event);
-        const logContents = log.dump();
 
-        expect(logContents.length).toEqual(1);
-        expect(logContents[0][0]).toMatch(/matched.*issues.labeled/);
-        expect(logContents[0][1]).toEqual(event);
+        expect(log.info.calls.length).toEqual(1);
+        expect(log.info.calls[0].arguments[0]).toMatch(/matched.*issues.labeled/);
+        expect(log.info.calls[0].arguments[1]).toEqual(event);
+      });
+
+      it('does not write for an unmatched event', () => {
+        const event = {event: 'pull_request', payload: {}};
+        workflow.matches(event);
+
+        expect(log.info.calls.length).toEqual(0);
       });
     });
   });
