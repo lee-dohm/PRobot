@@ -4,6 +4,25 @@ _**Heads up!** these examples include configuration options that are aspirationa
 
 Here are some examples of interesting things you can do by combining these components.
 
+
+```js
+on('issues.opened')
+  .filter((event) => {
+      return !event.issue.body.match(/### Steps to Reproduce/)
+       || event.issue.body.includes('- [ ]')
+    })
+  .filter((event, context) => {
+     return context.github.orgs.checkMembership({org: 'atom', username: event.payload.sender.login}).then(() => {
+         return Promise.reject();
+     }).catch(() => {
+         return Promise.resolve();
+     })
+  })
+  .comment(contents('.github/MISSING_ISSUE_TEMPLATE_AUTOREPLY.md'))
+  .label('insufficient-info')
+  .close();
+```
+
 ### Require use of issue template
 
 ```js
@@ -19,6 +38,7 @@ on('issues.opened')
       return !event.issue.body.match(/### Steps to Reproduce/)
        || event.issue.body.includes('- [ ]')
     })
+
   .comment.contents('.github/MISSING_ISSUE_TEMPLATE_AUTOREPLY.md')
   .label('insufficient-info')
   .close();
