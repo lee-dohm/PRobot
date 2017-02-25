@@ -18,7 +18,10 @@ on('issues.opened')
   .filter((event) => {
       return !event.issue.body.match(/### Steps to Reproduce/)
        || event.issue.body.includes('- [ ]')
-    })
+  })
+  .then((event, context) = {
+    return Promise.invert(context.github.orgs.checkMembers())
+  });
   .comment(contents('.github/MISSING_ISSUE_TEMPLATE_AUTOREPLY.md'))
   .label('insufficient-info')
   .close();
